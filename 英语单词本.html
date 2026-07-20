@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📖 英语单词本</title>
+<style>
+/* ========== CSS Variables ========== */
+:root {
+  --sidebar-w: 260px;
+  --primary: #4F46E5;
+  --primary-light: #EEF2FF;
+  --primary-hover: #4338CA;
+  --danger: #EF4444;
+  --danger-hover: #DC2626;
+  --sidebar-bg: #1E293B;
+  --sidebar-text: #CBD5E1;
+  --sidebar-active: #334155;
+  --sidebar-hover: #283548;
+  --main-bg: #F1F5F9;
+  --card-bg: #FFFFFF;
+  --text: #1E293B;
+  --text-secondary: #64748B;
+  --border: #E2E8F0;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,.1);
+  --transition: 0.2s ease;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  background: var(--main-bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== Sidebar ========== */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  user-select: none;
+}
+
+.sidebar-header {
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+.sidebar-header .subtitle {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 3px;
+}
+
+.page-list-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+}
+.page-list-wrap::-webkit-scrollbar { width: 4px; }
+.page-list-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
+
+.page-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--transition);
+  margin-bottom: 2px;
+  position: relative;
+  gap: 8px;
+}
+.page-item:hover { background: var(--sidebar-hover); }
+.page-item.active { background: var(--sidebar-active); }
+.page-item.active .page-name { color: #fff; font-weight: 600; }
+
+.page-icon { font-size: 16px; flex-shrink: 0; }
+.page-info { flex:1; min-width:0; }
+.page-name {
+  font-size: 13px;
+  color: #E2E8F0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.page-count {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 1px;
+}
+.page-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.page-item:hover .page-actions { opacity: 1; }
+.page-actions button {
+  width: 24px; height: 24px;
+  border: none;
+  background: rgba(255,255,255,.08);
+  color: #CBD5E1;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition);
+}
+.page-actions button:hover { background: rgba(255,255,255,.18); color: #fff; }
+.page-actions .btn-del-page:hover { background: var(--danger); }
+
+.sidebar-footer {
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sidebar-footer button {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition);
+  text-align: left;
+}
+.btn-add-page {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-add-page:hover { background: var(--primary-hover); }
+.btn-today-page {
+  background: rgba(255,255,255,.08);
+  color: #E2E8F0;
+}
+.btn-today-page:hover { background: rgba(255,255,255,.14); }
+.btn-export {
+  background: rgba(255,255,255,.06);
+  color: #CBD5E1;
+  font-size: 12px !important;
+}
+.btn-export:hover { background: rgba(255,255,255,.12); color: #fff; }
+.btn-import {
+  background: rgba(255,255,255,.06);
+  color: #CBD5E1;
+  font-size: 12px !important;
+}
+.btn-import:hover { background: rgba(255,255,255,.12); color: #fff; }
+
+/* ========== Main ========== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--main-bg);
+}
+
+/* Empty state (no page selected) */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  gap: 12px;
+}
+.empty-state .icon { font-size: 64px; }
+.empty-state .title { font-size: 18px; font-weight: 600; color: var(--text); }
+.empty-state .desc { font-size: 14px; }
+
+/* Main header */
+.main-header {
+  background: var(--card-bg);
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow);
+  z-index: 10;
+}
+.main-header .page-title {
+  font-size: 19px;
+  font-weight: 700;
+  border: 2px solid transparent;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: transparent;
+  transition: all var(--transition);
+  min-width: 120px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.main-header .page-title:hover { border-color: var(--border); background: #F8FAFC; }
+.main-header .page-title:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.search-box {
+  flex: 1;
+  min-width: 180px;
+  position: relative;
+}
+.search-box input {
+  width: 100%;
+  padding: 8px 14px 8px 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all var(--transition);
+  background: #F8FAFC;
+}
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+}
+.search-box .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.word-count-badge {
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Word table area */
+.table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+.table-wrap::-webkit-scrollbar { width: 6px; }
+.table-wrap::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+
+.word-table {
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border-collapse: collapse;
+  overflow: hidden;
+}
+.word-table thead {
+  background: #F8FAFC;
+  border-bottom: 2px solid var(--border);
+}
+.word-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.word-table th.col-en { width: 30%; }
+.word-table th.col-zh { width: 30%; }
+.word-table th.col-note { width: 28%; }
+.word-table th.col-act { width: 12%; text-align: center; }
+
+.word-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 14px;
+  vertical-align: middle;
+}
+.word-table tbody tr {
+  transition: background var(--transition);
+}
+.word-table tbody tr:hover { background: #F8FAFC; }
+.word-table tbody tr:last-child td { border-bottom: none; }
+
+.word-table .cell-en {
+  font-weight: 600;
+  color: var(--text);
+  font-family: "Segoe UI", "Consolas", monospace;
+  font-size: 15px;
+}
+.word-table .cell-zh { color: #334155; }
+.word-table .cell-note { color: var(--text-secondary); font-size: 13px; font-style: italic; }
+
+/* Inline edit */
+.word-table td input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1.5px solid var(--primary);
+  border-radius: 5px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+.word-table td input:focus { box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.row-actions button {
+  width: 30px; height: 30px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-edit {
+  background: #EEF2FF;
+  color: var(--primary);
+}
+.btn-edit:hover { background: var(--primary); color: #fff; }
+.btn-del {
+  background: #FEF2F2;
+  color: var(--danger);
+}
+.btn-del:hover { background: var(--danger); color: #fff; }
+.btn-save-inline {
+  background: #DCFCE7;
+  color: #16A34A;
+}
+.btn-save-inline:hover { background: #16A34A; color: #fff; }
+.btn-cancel-inline {
+  background: #F1F5F9;
+  color: #64748B;
+}
+.btn-cancel-inline:hover { background: #94A3B8; color: #fff; }
+
+/* Add word form */
+.add-word-bar {
+  background: var(--card-bg);
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  box-shadow: 0 -1px 3px rgba(0,0,0,.04);
+  z-index: 10;
+}
+.add-word-bar label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.add-word-bar input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-size: 14px;
+  transition: all var(--transition);
+}
+.add-word-bar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79,70,229,.08);
+}
+.add-word-bar .btn-add-word {
+  padding: 9px 22px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.add-word-bar .btn-add-word:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,70,229,.3); }
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn .3s ease;
+  max-width: 360px;
+}
+.toast.success { background: #059669; }
+.toast.error { background: var(--danger); }
+.toast.info { background: var(--primary); }
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(40px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+/* Modal (confirm delete) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn .15s ease;
+}
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  box-shadow: var(--shadow-lg);
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+}
+.modal h3 { font-size: 17px; margin-bottom: 8px; }
+.modal p { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+.modal-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.modal-btns button {
+  padding: 9px 24px;
+  border: none;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.modal-btn-cancel { background: #F1F5F9; color: var(--text); }
+.modal-btn-cancel:hover { background: #E2E8F0; }
+.modal-btn-confirm { background: var(--danger); color: #fff; }
+.modal-btn-confirm:hover { background: var(--danger-hover); }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { width: 200px; min-width: 200px; }
+  .main-header { padding: 12px 14px; gap: 8px; }
+  .main-header .page-title { font-size: 15px; min-width: 80px; }
+  .table-wrap { padding: 10px 8px; }
+  .word-table th, .word-table td { padding: 8px 6px; font-size: 12px; }
+  .add-word-bar { padding: 10px 12px; gap: 6px; flex-wrap: wrap; }
+  .add-word-bar label { font-size: 12px; }
+  .add-word-bar input { font-size: 12px; padding: 6px 8px; }
+}
+@media (max-width: 500px) {
+  body { flex-direction: column; }
+  .sidebar { width: 100%; min-width: 100%; height: auto; max-height: 180px; flex-shrink: 0; }
+  .main { height: auto; flex: 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== Sidebar ========== -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>📖 英语单词本</h1>
+    <div class="subtitle">记录每一个不会的单词</div>
+  </div>
+  <div class="page-list-wrap" id="pageList"></div>
+  <div class="sidebar-footer">
+    <button class="btn-add-page" onclick="addPage()">＋ 新建页签</button>
+    <button class="btn-today-page" onclick="addTodayPage()">📅 新建今日页签</button>
+    <button class="btn-export" onclick="exportData()">📥 导出全部数据</button>
+    <button class="btn-import" onclick="document.getElementById('importFile').click()">📤 导入数据</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</aside>
+
+<!-- ========== Main ========== -->
+<main class="main" id="mainContent">
+  <div class="empty-state" id="emptyState">
+    <div class="icon">📝</div>
+    <div class="title">欢迎使用英语单词本</div>
+    <div class="desc">在左侧新建一个页签，开始记录你的单词吧！</div>
+  </div>
+
+  <!-- Normal content (hidden when no page) -->
+  <div id="pageContent" style="display:none; height:100%; display:flex; flex-direction:column;">
+    <div class="main-header">
+      <input class="page-title" id="pageTitleInput" value="" title="双击或点击编辑页签名称" />
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="search" id="searchInput" placeholder="搜索英文、中文或备注…" oninput="renderWords()" />
+      </div>
+      <span class="word-count-badge" id="wordCountBadge">0 个单词</span>
+    </div>
+    <div class="table-wrap" id="tableWrap">
+      <table class="word-table">
+        <thead>
+          <tr>
+            <th class="col-en">🇬🇧 英文</th>
+            <th class="col-zh">🇨🇳 中文释义</th>
+            <th class="col-note">📌 备注</th>
+            <th class="col-act">操作</th>
+          </tr>
+        </thead>
+        <tbody id="wordTableBody"></tbody>
+      </table>
+      <div id="noWordsMsg" style="display:none; text-align:center; padding:40px; color:#94A3B8;">
+        📭 该页签还没有单词，在下方添加第一个吧
+      </div>
+    </div>
+    <div class="add-word-bar">
+      <label>➕ 添加单词</label>
+      <input type="text" id="inputEn" placeholder="英文" />
+      <input type="text" id="inputZh" placeholder="中文释义" />
+      <input type="text" id="inputNote" placeholder="备注（可选）" />
+      <button class="btn-add-word" onclick="addWord()">添加</button>
+    </div>
+  </div>
+</main>
+
+<!-- ========== Toast Container ========== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ========== Modal Container ========== -->
+<div id="modalContainer"></div>
+
+<script>
+// ==================== DATA LAYER ====================
+const STORAGE_KEY = 'eng_vocab_book_data';
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.pages && Array.isArray(data.pages)) return data;
+    }
+  } catch(e) { /* corrupted data, reset */ }
+  return { pages: [], activePageId: null };
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+let appData = loadData();
+
+function persist() {
+  saveData(appData);
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+}
+
+// ==================== TOAST ====================
+function toast(msg, type='info') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; }, 2000);
+  setTimeout(() => el.remove(), 2400);
+}
+
+// ==================== MODAL ====================
+function showConfirm(title, message, onConfirm) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal">
+        <h3>${title}</h3>
+        <p>${message}</p>
+        <div class="modal-btns">
+          <button class="modal-btn-cancel" onclick="closeModal()">取消</button>
+          <button class="modal-btn-confirm" id="modalConfirmBtn">确认</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+    closeModal();
+    onConfirm();
+  });
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modalOverlay') closeModal();
+  });
+}
+
+function closeModal() {
+  document.getElementById('modalContainer').innerHTML = '';
+}
+
+// ==================== PAGE MANAGEMENT ====================
+function getActivePage() {
+  if (!appData.activePageId) return null;
+  return appData.pages.find(p => p.id === appData.activePageId) || null;
+}
+
+function getActivePageIndex() {
+  return appData.pages.findIndex(p => p.id === appData.activePageId);
+}
+
+function addPage(name) {
+  const pageName = name || '未命名页签';
+  const page = {
+    id: genId(),
+    name: pageName,
+    createdAt: new Date().toISOString(),
+    words: []
+  };
+  appData.pages.push(page);
+  appData.activePageId = page.id;
+  persist();
+  renderAll();
+  toast(`已创建页签「${pageName}」`, 'success');
+}
+
+function addTodayPage() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  const name = `${y}-${m}-${d} 每日单词`;
+  // Check if already exists
+  const exists = appData.pages.find(p => p.name === name);
+  if (exists) {
+    appData.activePageId = exists.id;
+    persist();
+    renderAll();
+    toast('该日期的页签已存在，已切换', 'info');
+    return;
+  }
+  addPage(name);
+}
+
+function switchPage(pageId) {
+  appData.activePageId = pageId;
+  persist();
+  renderAll();
+}
+
+function renamePage(pageId, newName) {
+  const page = appData.pages.find(p => p.id === pageId);
+  if (!page) return;
+  const trimmed = newName.trim();
+  if (!trimmed) { toast('页签名称不能为空', 'error'); return; }
+  page.name = trimmed;
+  persist();
+  renderAll();
+  toast('页签已重命名', 'success');
+}
+
+function deletePage(pageId) {
+  const page = appData.pages.find(p => p.id === pageId);
+  if (!page) return;
+  const wordCount = page.words.length;
+  const msg = wordCount > 0
+    ? `将同时删除该页签中的 <b>${wordCount}</b> 个单词，此操作不可恢复。`
+    : '此操作不可恢复。';
+  showConfirm('删除页签', `确定要删除页签「<b>${page.name}</b>」吗？<br><br>${msg}`, () => {
+    appData.pages = appData.pages.filter(p => p.id !== pageId);
+    if (appData.activePageId === pageId) {
+      appData.activePageId = appData.pages.length > 0 ? appData.pages[0].id : null;
+    }
+    persist();
+    renderAll();
+    toast('页签已删除', 'info');
+  });
+}
+
+// ==================== WORD MANAGEMENT ====================
+function addWord() {
+  const page = getActivePage();
+  if (!page) { toast('请先选择一个页签', 'error'); return; }
+
+  const enEl = document.getElementById('inputEn');
+  const zhEl = document.getElementById('inputZh');
+  const noteEl = document.getElementById('inputNote');
+
+  const english = enEl.value.trim();
+  const chinese = zhEl.value.trim();
+  const notes = noteEl.value.trim();
+
+  if (!english || !chinese) {
+    toast('英文和中文释义为必填项', 'error');
+    if (!english) enEl.focus();
+    else if (!chinese) zhEl.focus();
+    return;
+  }
+
+  page.words.push({
+    id: genId(),
+    english,
+    chinese,
+    notes
+  });
+
+  persist();
+  enEl.value = '';
+  zhEl.value = '';
+  noteEl.value = '';
+  enEl.focus();
+  renderWords();
+  updateWordCount();
+  toast(`已添加：${english}`, 'success');
+}
+
+function updateWord(pageId, wordId, field, value) {
+  const page = appData.pages.find(p => p.id === pageId);
+  if (!page) return;
+  const word = page.words.find(w => w.id === wordId);
+  if (!word) return;
+  word[field] = value.trim();
+  persist();
+}
+
+function deleteWord(pageId, wordId) {
+  const page = appData.pages.find(p => p.id === pageId);
+  if (!page) return;
+  const word = page.words.find(w => w.id === wordId);
+  if (!word) return;
+  showConfirm('删除单词', `确定删除单词「<b>${word.english}</b>」吗？`, () => {
+    page.words = page.words.filter(w => w.id !== wordId);
+    persist();
+    renderWords();
+    updateWordCount();
+    toast(`已删除：${word.english}`, 'info');
+  });
+}
+
+// ==================== RENDER ====================
+function renderAll() {
+  renderSidebar();
+  renderPageContent();
+}
+
+function renderSidebar() {
+  const listEl = document.getElementById('pageList');
+  if (appData.pages.length === 0) {
+    listEl.innerHTML = `
+      <div style="text-align:center;padding:30px 10px;color:#94A3B8;font-size:13px;line-height:1.6;">
+        📄<br>还没有页签<br>点击下方按钮新建
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = appData.pages.map(p => {
+    const isActive = p.id === appData.activePageId;
+    const wordCount = p.words.length;
+    return `
+      <div class="page-item ${isActive ? 'active' : ''}" onclick="switchPage('${p.id}')">
+        <span class="page-icon">${isActive ? '📖' : '📄'}</span>
+        <div class="page-info">
+          <div class="page-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+          <div class="page-count">${wordCount} 个单词</div>
+        </div>
+        <div class="page-actions" onclick="event.stopPropagation()">
+          <button title="重命名" onclick="promptRename('${p.id}', '${escapeAttr(p.name)}')">✏️</button>
+          <button class="btn-del-page" title="删除" onclick="deletePage('${p.id}')">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function promptRename(pageId, currentName) {
+  const newName = prompt('请输入新的页签名称：', currentName);
+  if (newName !== null && newName !== currentName) {
+    renamePage(pageId, newName);
+  }
+}
+
+function renderPageContent() {
+  const page = getActivePage();
+  const emptyState = document.getElementById('emptyState');
+  const pageContent = document.getElementById('pageContent');
+
+  if (!page) {
+    emptyState.style.display = 'flex';
+    pageContent.style.display = 'none';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  pageContent.style.display = 'flex';
+
+  // Update page title input
+  const titleInput = document.getElementById('pageTitleInput');
+  titleInput.value = page.name;
+  titleInput.onchange = function() {
+    renamePage(page.id, this.value);
+  };
+  // Also update on blur
+  titleInput.onblur = function() {
+    if (this.value.trim() !== page.name) {
+      renamePage(page.id, this.value);
+    }
+  };
+
+  renderWords();
+  updateWordCount();
+}
+
+function renderWords() {
+  const page = getActivePage();
+  const tbody = document.getElementById('wordTableBody');
+  const noWordsMsg = document.getElementById('noWordsMsg');
+  const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+
+  if (!page) return;
+
+  let words = page.words;
+
+  // Filter
+  if (searchTerm) {
+    words = words.filter(w =>
+      w.english.toLowerCase().includes(searchTerm) ||
+      w.chinese.includes(searchTerm) ||
+      (w.notes && w.notes.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  if (words.length === 0) {
+    tbody.innerHTML = '';
+    noWordsMsg.style.display = 'block';
+    if (searchTerm) {
+      noWordsMsg.innerHTML = '🔍 没有找到匹配的单词';
+    } else {
+      noWordsMsg.innerHTML = '📭 该页签还没有单词，在下方添加第一个吧';
+    }
+    return;
+  }
+
+  noWordsMsg.style.display = 'none';
+
+  tbody.innerHTML = words.map(w => `
+    <tr id="row-${w.id}">
+      <td class="cell-en" id="cell-en-${w.id}">${escapeHtml(w.english)}</td>
+      <td class="cell-zh" id="cell-zh-${w.id}">${escapeHtml(w.chinese)}</td>
+      <td class="cell-note" id="cell-note-${w.id}">${escapeHtml(w.notes || '—')}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-edit" title="编辑" onclick="startEdit('${w.id}')">✏️</button>
+          <button class="btn-del" title="删除" onclick="deleteWord('${page.id}', '${w.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateWordCount() {
+  const page = getActivePage();
+  const badge = document.getElementById('wordCountBadge');
+  if (page && badge) {
+    const total = page.words.length;
+    badge.textContent = total === 0 ? '0 个单词' : `${total} 个单词`;
+  }
+}
+
+// ==================== INLINE EDIT ====================
+let editingWordId = null;
+
+function startEdit(wordId) {
+  if (editingWordId) cancelEdit();
+
+  const page = getActivePage();
+  if (!page) return;
+
+  const word = page.words.find(w => w.id === wordId);
+  if (!word) return;
+
+  editingWordId = wordId;
+
+  const enCell = document.getElementById(`cell-en-${wordId}`);
+  const zhCell = document.getElementById(`cell-zh-${wordId}`);
+  const noteCell = document.getElementById(`cell-note-${wordId}`);
+  const row = document.getElementById(`row-${wordId}`);
+
+  enCell.innerHTML = `<input type="text" id="editEn" value="${escapeAttr(word.english)}" />`;
+  zhCell.innerHTML = `<input type="text" id="editZh" value="${escapeAttr(word.chinese)}" />`;
+  noteCell.innerHTML = `<input type="text" id="editNote" value="${escapeAttr(word.notes || '')}" placeholder="备注" />`;
+
+  // Replace action buttons
+  const actionsCell = row.querySelector('td:last-child');
+  actionsCell.innerHTML = `
+    <div class="row-actions">
+      <button class="btn-save-inline" title="保存" onclick="saveEdit('${wordId}')">✅</button>
+      <button class="btn-cancel-inline" title="取消" onclick="cancelEdit()">❌</button>
+    </div>
+  `;
+
+  document.getElementById('editEn').focus();
+  document.getElementById('editEn').select();
+
+  // Enter key to save
+  const handleEnter = (e) => { if (e.key === 'Enter') saveEdit(wordId); };
+  document.getElementById('editEn').addEventListener('keydown', handleEnter);
+  document.getElementById('editZh').addEventListener('keydown', handleEnter);
+  document.getElementById('editNote').addEventListener('keydown', handleEnter);
+}
+
+function saveEdit(wordId) {
+  const page = getActivePage();
+  if (!page) return;
+
+  const enVal = document.getElementById('editEn')?.value?.trim() || '';
+  const zhVal = document.getElementById('editZh')?.value?.trim() || '';
+
+  if (!enVal || !zhVal) {
+    toast('英文和中文释义不能为空', 'error');
+    return;
+  }
+
+  updateWord(page.id, wordId, 'english', enVal);
+  updateWord(page.id, wordId, 'chinese', zhVal);
+  updateWord(page.id, wordId, 'notes', document.getElementById('editNote')?.value || '');
+
+  editingWordId = null;
+  persist();
+  renderWords();
+  toast('单词已更新', 'success');
+}
+
+function cancelEdit() {
+  editingWordId = null;
+  renderWords();
+}
+
+// ==================== EXPORT / IMPORT ====================
+function exportData() {
+  if (appData.pages.length === 0) {
+    toast('没有数据可导出', 'error');
+    return;
+  }
+  const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  a.href = url;
+  a.download = `英语单词本_备份_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('数据导出成功！', 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.pages || !Array.isArray(imported.pages)) {
+        throw new Error('格式错误');
+      }
+
+      showConfirm('导入数据',
+        `发现 <b>${imported.pages.length}</b> 个页签，共 <b>${imported.pages.reduce((s,p) => s + p.words.length, 0)}</b> 个单词。<br><br>选择「覆盖」将替换当前所有数据，选择「合并」将追加到现有数据中。`,
+        () => {
+          // Default: merge
+          mergeData(imported);
+        });
+
+      // Override confirm to offer merge by default, but let user cancel for replace option
+      // Actually, let's just merge for safety
+      closeModal();
+      mergeData(imported);
+    } catch(err) {
+      toast('文件格式错误，无法导入', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function mergeData(imported) {
+  // Merge: add pages that don't conflict (by name or just append)
+  const existingNames = new Set(appData.pages.map(p => p.name));
+  let addedPages = 0;
+  let addedWords = 0;
+
+  imported.pages.forEach(ip => {
+    // If a page with the same name exists, add words to it
+    const existing = appData.pages.find(p => p.name === ip.name);
+    if (existing) {
+      const existingWords = new Set(existing.words.map(w => w.english.toLowerCase()));
+      ip.words.forEach(w => {
+        if (!existingWords.has(w.english.toLowerCase())) {
+          existing.words.push({ ...w, id: genId() });
+          addedWords++;
+        }
+      });
+    } else {
+      // Give new IDs
+      const newPage = {
+        ...ip,
+        id: genId(),
+        words: ip.words.map(w => ({ ...w, id: genId() }))
+      };
+      appData.pages.push(newPage);
+      addedPages++;
+      addedWords += newPage.words.length;
+    }
+  });
+
+  if (appData.pages.length > 0 && !appData.activePageId) {
+    appData.activePageId = appData.pages[0].id;
+  }
+
+  persist();
+  renderAll();
+  toast(`导入完成：新增 ${addedPages} 个页签，${addedWords} 个单词`, 'success');
+}
+
+// ==================== UTILS ====================
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function escapeAttr(str) {
+  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ==================== KEYBOARD SHORTCUTS ====================
+document.addEventListener('keydown', function(e) {
+  // Ctrl+Enter or Cmd+Enter to add word
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    addWord();
+  }
+  // Escape to cancel edit
+  if (e.key === 'Escape' && editingWordId) {
+    e.preventDefault();
+    cancelEdit();
+  }
+});
+
+// Listen for Enter in add-word inputs
+document.addEventListener('keydown', function(e) {
+  if (e.target && ['inputEn', 'inputZh', 'inputNote'].includes(e.target.id) && e.key === 'Enter') {
+    e.preventDefault();
+    addWord();
+  }
+});
+
+// ==================== INIT ====================
+function init() {
+  // If no pages, create a default one
+  if (appData.pages.length === 0) {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    const defaultPage = {
+      id: genId(),
+      name: `${y}-${m}-${d} 每日单词`,
+      createdAt: new Date().toISOString(),
+      words: []
+    };
+    appData.pages.push(defaultPage);
+    appData.activePageId = defaultPage.id;
+    persist();
+  }
+
+  // Ensure activePageId is valid
+  if (appData.activePageId && !appData.pages.find(p => p.id === appData.activePageId)) {
+    appData.activePageId = appData.pages.length > 0 ? appData.pages[0].id : null;
+    persist();
+  }
+
+  renderAll();
+
+  // Focus on English input if a page is active
+  if (getActivePage()) {
+    setTimeout(() => {
+      document.getElementById('inputEn')?.focus();
+    }, 100);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
